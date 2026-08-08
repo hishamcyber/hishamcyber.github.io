@@ -10,6 +10,14 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
+<script>
+  // Set theme before first paint to avoid a flash of the wrong mode
+  (function () {
+    var saved = localStorage.getItem('theme');
+    var theme = saved || (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+    document.documentElement.setAttribute('data-theme', theme);
+  })();
+</script>
 </head>
 <body>
 
@@ -19,16 +27,34 @@
     <a href="#top" class="path">
       <span class="path__user">hicham@hishamcyber</span><span class="path__sep">:</span><span class="path__tilde">~</span><span class="path__dollar">$</span>
     </a>
-    <button class="menu-toggle" id="menuToggle" aria-label="Toggle navigation" aria-expanded="false">
-      <span></span><span></span><span></span>
-    </button>
-    <nav class="navlinks" id="navLinks">
-      <a href="#about"><span class="route-verb">GET</span> /about</a>
-      <a href="#skills"><span class="route-verb">GET</span> /skills</a>
-      <a href="#projects"><span class="route-verb">GET</span> /projects</a>
-      <a href="#credentials"><span class="route-verb">GET</span> /credentials</a>
-      <a href="#contact" class="navlinks__cta"><span class="route-verb route-verb--post">POST</span> /contact</a>
-    </nav>
+    <div class="topbar__group">
+      <nav class="navlinks" id="navLinks">
+        <a href="#about"><span class="route-verb">GET</span> /about</a>
+        <a href="#skills"><span class="route-verb">GET</span> /skills</a>
+        <a href="#projects"><span class="route-verb">GET</span> /projects</a>
+        <a href="#credentials"><span class="route-verb">GET</span> /credentials</a>
+        <a href="#contact" class="navlinks__cta"><span class="route-verb route-verb--post">POST</span> /contact</a>
+      </nav>
+      <button class="theme-toggle" id="themeToggle" aria-label="Switch between dark and light mode">
+        <svg class="icon icon--sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="4"></circle>
+          <line x1="12" y1="2" x2="12" y2="4.5"></line>
+          <line x1="12" y1="19.5" x2="12" y2="22"></line>
+          <line x1="4.22" y1="4.22" x2="5.94" y2="5.94"></line>
+          <line x1="18.06" y1="18.06" x2="19.78" y2="19.78"></line>
+          <line x1="2" y1="12" x2="4.5" y2="12"></line>
+          <line x1="19.5" y1="12" x2="22" y2="12"></line>
+          <line x1="4.22" y1="19.78" x2="5.94" y2="18.06"></line>
+          <line x1="18.06" y1="5.94" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="icon icon--moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5Z"></path>
+        </svg>
+      </button>
+      <button class="menu-toggle" id="menuToggle" aria-label="Toggle navigation" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
   </div>
 </header>
 
@@ -253,7 +279,7 @@
           Department.</p>
         </div>
         <div class="credential">
-          <span class="credential__badge">2024–2025</span>
+          <span class="credential__badge">2024–2026</span>
           <p><strong>President, International Student Union</strong> — Chengdu Neusoft University. Selected through
           a competitive process to set strategic direction, manage a team, and serve as the main liaison between
           international students and university administration.</p>
