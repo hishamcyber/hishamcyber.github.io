@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hicham Ouahbi — Backend Developer & Security Enthusiast</title>
+<meta name="description" content="Portfolio of Hicham Ouahbi, backend Python/Django developer and cybersecurity enthusiast based in Chengdu, China.">
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ===== NAV ===== -->
+<header class="topbar">
+  <div class="wrap topbar__inner">
+    <a href="#top" class="path">
+      <span class="path__user">hicham@hishamcyber</span><span class="path__sep">:</span><span class="path__tilde">~</span><span class="path__dollar">$</span>
+    </a>
+    <button class="menu-toggle" id="menuToggle" aria-label="Toggle navigation" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+    <nav class="navlinks" id="navLinks">
+      <a href="#about"><span class="route-verb">GET</span> /about</a>
+      <a href="#skills"><span class="route-verb">GET</span> /skills</a>
+      <a href="#projects"><span class="route-verb">GET</span> /projects</a>
+      <a href="#credentials"><span class="route-verb">GET</span> /credentials</a>
+      <a href="#contact" class="navlinks__cta"><span class="route-verb route-verb--post">POST</span> /contact</a>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+
+  <!-- ===== HERO ===== -->
+  <section class="hero">
+    <div class="wrap">
+      <div class="request-line">
+        <span class="method method--get">GET</span>
+        <span class="route">/hicham</span>
+        <span class="proto">HTTP/1.1</span>
+      </div>
+
+      <h1 class="hero__name">Hicham Ouahbi</h1>
+      <p class="hero__handle">also known as 万昊 (Wàn Hào)</p>
+
+      <div class="response">
+        <div class="response__status">
+          <span class="dot dot--ok"></span>
+          <span class="status-code">200 OK</span>
+          <span class="response__meta">content-type: application/human</span>
+        </div>
+        <pre class="response__body"><span class="tok-brace">{</span>
+  <span class="tok-key">"role"</span>: <span class="tok-str">"Backend Developer — Python / Django"</span>,
+  <span class="tok-key">"focus"</span>: <span class="tok-str">"REST APIs, PostgreSQL, applied security"</span>,
+  <span class="tok-key">"status"</span>: <span class="tok-str">"Final-year Software Engineering student, graduating early 2027"</span>,
+  <span class="tok-key">"location"</span>: <span class="tok-str">"Chengdu, China"</span>,
+  <span class="tok-key">"seeking"</span>: <span class="tok-str">"Backend / security-adjacent internship"</span><span class="cursor">|</span>
+<span class="tok-brace">}</span></pre>
+      </div>
+
+      <div class="hero__actions">
+        <a class="btn btn--primary" href="mailto:hishamodel@gmail.com">Get in touch</a>
+        <a class="btn btn--ghost" href="https://github.com/hishamcyber" target="_blank" rel="noopener">View GitHub</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== ABOUT ===== -->
+  <section class="section" id="about">
+    <div class="wrap">
+      <p class="section__route">GET /about <span class="status-chip">200</span></p>
+      <h2 class="section__title">About</h2>
+      <div class="about__grid">
+        <p class="about__text">
+          I'm a final-year Software Engineering student at Chengdu Neusoft University, building backend systems
+          with Django and PostgreSQL and picking apart how they break through CTF challenges and HackTheBox machines.
+          I led the architecture of a multi-contributor Django application from data model to deployment, and I ranked
+          in the top 10% of my cohort in database and web development coursework.
+        </p>
+        <p class="about__text">
+          Outside of coursework, I run Arch Linux with Hyprland day to day, maintain a structured knowledge base of
+          everything from Nmap flags to chess openings, and serve as President of the International Student Union —
+          which mostly means I've gotten good at explaining technical decisions to people who didn't ask for the details.
+          I'm looking for a backend or security-adjacent internship at an English-speaking company in China.
+        </p>
+      </div>
+      <dl class="factrow">
+        <div><dt>Languages</dt><dd>Arabic (native) · English (fluent) · Chinese (basic) · French (conversational)</dd></div>
+        <div><dt>Base</dt><dd>Chengdu, China</dd></div>
+        <div><dt>Graduating</dt><dd>Early 2027</dd></div>
+      </dl>
+    </div>
+  </section>
+
+  <!-- ===== SKILLS ===== -->
+  <section class="section section--alt" id="skills">
+    <div class="wrap">
+      <p class="section__route">GET /skills <span class="status-chip">200</span></p>
+      <h2 class="section__title">Skills</h2>
+
+      <div class="skillgroups">
+        <div class="skillgroup">
+          <h3><span class="skillgroup__index">01</span> Backend &amp; Databases</h3>
+          <ul class="taglist">
+            <li>Python</li><li>Django</li><li>Django REST Framework</li><li>PostgreSQL</li><li>MySQL</li><li>SQLite</li><li>REST API design</li><li>ORM modeling</li>
+          </ul>
+        </div>
+        <div class="skillgroup">
+          <h3><span class="skillgroup__index">02</span> Security Tooling</h3>
+          <ul class="taglist">
+            <li>Nmap</li><li>Metasploit</li><li>Nuclei</li><li>FFUF</li><li>Subfinder</li><li>Shodan</li><li>WhatWeb</li><li>CTF &amp; HackTheBox</li>
+          </ul>
+        </div>
+        <div class="skillgroup">
+          <h3><span class="skillgroup__index">03</span> Systems &amp; Tools</h3>
+          <ul class="taglist">
+            <li>Linux (Arch, Hyprland)</li><li>Git / GitHub</li><li>Docker</li><li>Bash scripting</li><li>Dual-boot environments</li>
+          </ul>
+        </div>
+        <div class="skillgroup">
+          <h3><span class="skillgroup__index">04</span> Frontend &amp; Other</h3>
+          <ul class="taglist">
+            <li>JavaScript</li><li>Vue.js</li><li>HTML / CSS</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== PROJECTS ===== -->
+  <section class="section" id="projects">
+    <div class="wrap">
+      <p class="section__route">GET /projects <span class="status-chip">200</span></p>
+      <h2 class="section__title">Projects</h2>
+      <p class="section__lede">Six endpoints, six different problems. Click through for source.</p>
+
+      <div class="endpoints">
+
+        <article class="endpoint">
+          <div class="endpoint__head">
+            <span class="method method--get">GET</span>
+            <span class="route">/projects/bookkeeping-system</span>
+            <span class="tag-role">Project Lead</span>
+          </div>
+          <h3 class="endpoint__title">Bookkeeping System</h3>
+          <p class="endpoint__desc">
+            Multi-user Django web app for tracking income and expenses, with category-based organization and a live
+            financial dashboard. Led a 3-person team, designed the core data model (Users, Categories, Records), and
+            built request-scoped querysets so each user's financial data stays isolated.
+          </p>
+          <ul class="stack"><li>Django</li><li>PostgreSQL</li><li>Django ORM</li><li>AJAX</li></ul>
+          <a class="endpoint__link" href="https://github.com/hishamcyber/bookkeeping-system-django" target="_blank" rel="noopener">github.com/hishamcyber/bookkeeping-system-django →</a>
+        </article>
+
+        <article class="endpoint">
+          <div class="endpoint__head">
+            <span class="method method--get">GET</span>
+            <span class="route">/projects/nextwatch</span>
+            <span class="tag-role tag-role--wip">In Development</span>
+          </div>
+          <h3 class="endpoint__title">NextWatch</h3>
+          <p class="endpoint__desc">
+            A personalized movie, anime, and cartoon discovery platform built from scratch. Designing the REST API
+            and PostgreSQL schema and integrating the TMDB API for metadata and recommendations — structured around
+            clean app separation and scalable querying as a deliberate backend-depth piece.
+          </p>
+          <ul class="stack"><li>Django REST Framework</li><li>PostgreSQL</li><li>TMDB API</li></ul>
+          <a class="endpoint__link" href="https://github.com/hishamcyber/NextWatch" target="_blank" rel="noopener">github.com/hishamcyber/NextWatch →</a>
+        </article>
+
+        <article class="endpoint">
+          <div class="endpoint__head">
+            <span class="method method--post">POST</span>
+            <span class="route">/projects/wechat-ordering</span>
+          </div>
+          <h3 class="endpoint__title">WeChat Ordering System</h3>
+          <p class="endpoint__desc">
+            SnapBite, a WeChat Mini Program frontend for food ordering, paired with wechat-ordering-api, a
+            containerized Python backend handling order processing for the WeChat ecosystem — a common requirement
+            for China-market backend roles.
+          </p>
+          <ul class="stack"><li>Python</li><li>Docker</li><li>JavaScript</li><li>WeChat Mini Program</li></ul>
+          <div class="endpoint__linkrow">
+            <a class="endpoint__link" href="https://github.com/hishamcyber/SnapBite" target="_blank" rel="noopener">SnapBite →</a>
+            <a class="endpoint__link" href="https://github.com/hishamcyber/wechat-ordering-api" target="_blank" rel="noopener">wechat-ordering-api →</a>
+          </div>
+        </article>
+
+        <article class="endpoint">
+          <div class="endpoint__head">
+            <span class="method method--get">GET</span>
+            <span class="route">/projects/maps-scraper</span>
+            <span class="tag-role">Personal Tool</span>
+          </div>
+          <h3 class="endpoint__title">Google Maps Business Scraper</h3>
+          <p class="endpoint__desc">
+            Batch web-scraping tool that extracts business listings — name, contact info, ratings, coordinates —
+            from Google Maps, exporting structured results to CSV/Excel. Supports single-query and batch-mode
+            searches with configurable result limits.
+          </p>
+          <ul class="stack"><li>Python</li><li>Playwright</li><li>Pandas</li><li>OpenPyXL</li></ul>
+          <a class="endpoint__link" href="https://github.com/hishamcyber/Googles-Maps-Scraper" target="_blank" rel="noopener">github.com/hishamcyber/Googles-Maps-Scraper →</a>
+        </article>
+
+        <article class="endpoint">
+          <div class="endpoint__head">
+            <span class="method method--get">GET</span>
+            <span class="route">/projects/finpal</span>
+            <span class="tag-role">Frontend</span>
+          </div>
+          <h3 class="endpoint__title">FinPal</h3>
+          <p class="endpoint__desc">
+            Personal finance management SPA with shared-balance tracking, member management, and interactive
+            spending analytics — built to get comfortable owning a project's full frontend state.
+          </p>
+          <ul class="stack"><li>Vue 3</li><li>Pinia</li><li>Vue Router</li><li>Chart.js</li></ul>
+          <a class="endpoint__link" href="https://github.com/hishamcyber/finpal" target="_blank" rel="noopener">github.com/hishamcyber/finpal →</a>
+        </article>
+
+        <article class="endpoint">
+          <div class="endpoint__head">
+            <span class="method method--get">GET</span>
+            <span class="route">/projects/levticket</span>
+            <span class="tag-role">Full-Stack</span>
+          </div>
+          <h3 class="endpoint__title">LevTicket</h3>
+          <p class="endpoint__desc">
+            A full-stack ticketing application, built to work across a different backend stack and round out
+            range beyond Python/Django.
+          </p>
+          <ul class="stack"><li>Java</li></ul>
+          <a class="endpoint__link" href="https://github.com/hishamcyber/LevTicket" target="_blank" rel="noopener">github.com/hishamcyber/LevTicket →</a>
+        </article>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== CREDENTIALS ===== -->
+  <section class="section section--alt" id="credentials">
+    <div class="wrap">
+      <p class="section__route">GET /credentials <span class="status-chip">200</span></p>
+      <h2 class="section__title">Credentials &amp; Leadership</h2>
+
+      <div class="credentials">
+        <div class="credential">
+          <span class="credential__badge">Top 10%</span>
+          <p>Ranked in the top 10% of cohort in <em>Principles and Application of Database and Web Application
+          Development</em>, per written faculty recommendation from the Deputy Director of the Software Engineering
+          Department.</p>
+        </div>
+        <div class="credential">
+          <span class="credential__badge">2024–2025</span>
+          <p><strong>President, International Student Union</strong> — Chengdu Neusoft University. Selected through
+          a competitive process to set strategic direction, manage a team, and serve as the main liaison between
+          international students and university administration.</p>
+        </div>
+        <div class="credential">
+          <span class="credential__badge">On request</span>
+          <p>Letter of recommendation available from Prof. Zhang Chong, Deputy Director, Software Engineering
+          Department, Chengdu Neusoft University.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== CONTACT ===== -->
+  <section class="section contact" id="contact">
+    <div class="wrap">
+      <p class="section__route">POST /contact <span class="status-chip status-chip--post">202</span></p>
+      <h2 class="section__title">Let's talk</h2>
+      <p class="contact__lede">Open to backend and security-adjacent internships in China. Reach out directly:</p>
+
+      <div class="contact__grid">
+        <a class="contact__item" href="mailto:hishamodel@gmail.com">
+          <span class="contact__label">Email</span>
+          <span class="contact__value">hishamodel@gmail.com</span>
+        </a>
+        <a class="contact__item" href="https://github.com/hishamcyber" target="_blank" rel="noopener">
+          <span class="contact__label">GitHub</span>
+          <span class="contact__value">github.com/hishamcyber</span>
+        </a>
+        <div class="contact__item contact__item--static">
+          <span class="contact__label">Location</span>
+          <span class="contact__value">Chengdu, China</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="footer">
+  <div class="wrap footer__inner">
+    <span>© <span id="year"></span> Hicham Ouahbi</span>
+    <span class="footer__status"><span class="dot dot--ok"></span>200 — site operational</span>
+  </div>
+</footer>
+
+<script src="script.js"></script>
+</body>
+</html>
