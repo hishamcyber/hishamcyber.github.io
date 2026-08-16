@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NextWatch — Watch History</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #0a0a10;
+    --bg-raised: #101018;
+    --line: rgba(255,255,255,0.07);
+    --ink: #f2f1f6;
+    --ink-dim: #9694a6;
+    --ink-faint: #625f72;
+    --violet: #8b5cf6;
+    --violet-glow: #a78bfa;
+  }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,.brand{ font-family:'Sora',sans-serif; }
+
+  .topbar{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:18px 40px;
+  }
+  .brand{ display:flex; align-items:center; gap:9px; font-weight:800; font-size:19px; }
+  .brand .dot{ width:9px; height:9px; border-radius:50%; background:linear-gradient(135deg,var(--violet),#ff5c7c); box-shadow:0 0 12px var(--violet-glow); }
+  .top-icons{ display:flex; align-items:center; gap:22px; color:var(--ink-dim); }
+  .top-icons svg{ width:18px; height:18px; cursor:pointer; }
+  .top-icons svg:hover{ color:var(--ink); }
+  .top-right{ display:flex; align-items:center; gap:8px; color:var(--ink-dim); cursor:pointer; }
+  .top-right svg{ width:18px; height:18px; }
+
+  main{ max-width:1460px; margin:0 auto; padding:36px 40px 60px; }
+  h1.page-title{ font-size:44px; font-weight:700; margin-bottom:22px; }
+
+  .go-back{
+    display:inline-flex; align-items:center; gap:9px; color:var(--ink);
+    font-size:15px; font-weight:600; text-decoration:none; cursor:pointer;
+    margin-bottom:44px;
+  }
+  .go-back svg{ width:16px; height:16px; }
+  .go-back:hover{ color:var(--violet-glow); }
+
+  .section-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; }
+  .section-head .label{ display:flex; align-items:center; gap:9px; font-size:13px; font-weight:700; letter-spacing:0.6px; color:var(--ink-dim); text-transform:uppercase; }
+  .section-head .label svg{ width:15px; height:15px; }
+  .edit-icon{ width:17px; height:17px; color:var(--ink-dim); cursor:pointer; }
+  .edit-icon:hover{ color:var(--ink); }
+
+  .grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(190px, 190px)); gap:24px; }
+
+  .card{ width:190px; }
+  .poster{
+    width:190px; height:270px; border-radius:12px; position:relative; overflow:hidden;
+    border:1px solid var(--line); display:flex; align-items:flex-end;
+  }
+  .poster::after{ content:""; position:absolute; inset:0; background:linear-gradient(0deg, rgba(0,0,0,0.78), rgba(0,0,0,0) 55%); z-index:1; }
+  .poster .p-title{ position:relative; z-index:2; padding:14px; font-family:'Sora',sans-serif; font-weight:800; font-size:16px; line-height:1.2; color:#fff; text-shadow:0 2px 8px rgba(0,0,0,.6); }
+  .badge{
+    position:absolute; top:9px; right:9px; z-index:2; font-size:10.5px; font-weight:700;
+    background:rgba(0,0,0,0.6); padding:4px 8px; border-radius:6px; letter-spacing:.3px;
+  }
+  .progress-track{
+    position:absolute; left:8px; right:8px; bottom:8px; height:4px; border-radius:3px;
+    background:rgba(255,255,255,0.18); z-index:2; overflow:hidden;
+  }
+  .progress-fill{ height:100%; background:linear-gradient(90deg,var(--violet),var(--violet-glow)); border-radius:3px; }
+
+  .card-meta{ margin-top:12px; }
+  .card-title-row{ display:flex; align-items:flex-start; justify-content:space-between; gap:6px; }
+  .card-title{ font-size:15px; font-weight:700; line-height:1.25; }
+  .card-menu{ color:var(--ink-faint); font-size:16px; cursor:pointer; padding:2px 4px; flex-shrink:0; }
+  .card-menu:hover{ color:var(--ink); }
+  .card-sub{ font-size:12.5px; color:var(--ink-faint); margin-top:4px; }
+  .card-sub .sep{ margin:0 5px; }
+
+  footer{
+    margin-top:20px; border-top:1px solid var(--line);
+    padding:30px 40px; display:flex; justify-content:space-between; align-items:flex-start;
+    flex-wrap:wrap; gap:20px;
+  }
+  footer .f-left .brand{ margin-bottom:8px; }
+  footer .f-left p{ font-size:12.5px; color:var(--ink-faint); }
+  footer .f-right{ text-align:right; font-size:12px; color:var(--ink-faint); max-width:320px; }
+  footer .f-icons{ display:flex; gap:16px; margin-top:12px; font-size:12px; color:var(--ink-faint); }
+
+  @media (max-width:640px){
+    main, .topbar, footer{ padding-left:18px; padding-right:18px; }
+    .grid{ grid-template-columns:repeat(auto-fill, minmax(140px,140px)); gap:16px; }
+    .card, .poster{ width:140px; }
+    .poster{ height:200px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand"><span class="dot"></span>NextWatch</div>
+  <div class="top-icons">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v13"/><path d="M7 12l5 5 5-5"/><path d="M5 21h14"/></svg>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18"/></svg>
+  </div>
+  <div class="top-right">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+</div>
+
+<main>
+  <h1 class="page-title">Watch History</h1>
+  <div class="go-back" onclick="history.back()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+    Go back
+  </div>
+
+  <div class="section-head">
+    <div class="label">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+      Recently Watched
+    </div>
+    <svg class="edit-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>
+  </div>
+
+  <div class="grid" id="history-grid"></div>
+</main>
+
+<footer>
+  <div class="f-left">
+    <div class="brand"><span class="dot"></span>NextWatch</div>
+    <p>Watch your favorite shows and movies for free!</p>
+    <p>(ɔ'ヮ'c)</p>
+    <div class="f-icons"><span>GitHub</span><span>Fluxer/Discord</span></div>
+  </div>
+  <div class="f-right">
+    <div>Disclaimer ⚠️</div>
+    <p>Please note: NextWatch does not host any files itself; instead, it only displays content from third-party providers. Legal issues should be taken up with them.</p>
+    <div style="margin-top:8px;">Legal / DMCA</div>
+  </div>
+</footer>
+
+<script>
+  const items = [
+    { title:'Evil Dead', sub:'Movie', year:'2013', progress:22, grad:['#c0392b','#1a0d0d'] },
+    { title:'The Legend of Korra', sub:'Show', year:'2012', badge:'S1 · E1', progress:78, grad:['#3b6ea5','#0a1226'] },
+    { title:'Avatar Aang: The Last Airbender', sub:'Movie', year:'2026', progress:8, grad:['#1f8fd6','#06121e'] },
+  ];
+
+  const grid = document.getElementById('history-grid');
+  grid.innerHTML = items.map(it => `
+    <div class="card">
+      <div class="poster" style="background:linear-gradient(160deg, ${it.grad[0]}77, ${it.grad[1]} 80%)">
+        ${it.badge ? `<span class="badge">${it.badge}</span>` : ''}
+        <div class="p-title">${it.title}</div>
+        <div class="progress-track"><div class="progress-fill" style="width:${it.progress}%"></div></div>
+      </div>
+      <div class="card-meta">
+        <div class="card-title-row">
+          <div class="card-title">${it.title}</div>
+          <div class="card-menu">&#8230;</div>
+        </div>
+        <div class="card-sub">${it.sub}<span class="sep">&bull;</span>${it.year}</div>
+      </div>
+    </div>
+  `).join('');
+</script>
+
+</body>
+</html>

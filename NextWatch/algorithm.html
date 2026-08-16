@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NextWatch — My Algorithm</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #0a0a10;
+    --bg-raised: #101018;
+    --bg-panel: #131320;
+    --bg-row: #1a1a29;
+    --line: rgba(255,255,255,0.07);
+    --ink: #f2f1f6;
+    --ink-dim: #9694a6;
+    --ink-faint: #625f72;
+    --violet: #8b5cf6;
+    --violet-deep: #6d28d9;
+    --violet-glow: #a78bfa;
+  }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+  }
+  h1,.brand{ font-family:'Sora',sans-serif; }
+
+  .topbar{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:18px 40px;
+  }
+  .brand{ display:flex; align-items:center; gap:9px; font-weight:800; font-size:19px; }
+  .brand .dot{ width:9px; height:9px; border-radius:50%; background:linear-gradient(135deg,var(--violet),#ff5c7c); box-shadow:0 0 12px var(--violet-glow); }
+  .top-icons{ display:flex; align-items:center; gap:22px; color:var(--ink-dim); }
+  .top-icons svg{ width:18px; height:18px; cursor:pointer; }
+  .top-icons svg:hover{ color:var(--ink); }
+  .top-right{ display:flex; align-items:center; gap:8px; color:var(--ink-dim); cursor:pointer; }
+  .top-right svg{ width:18px; height:18px; }
+
+  main{ max-width:1460px; margin:0 auto; padding:36px 40px 60px; }
+  h1.page-title{ font-size:44px; font-weight:700; margin-bottom:18px; }
+  .intro{ color:var(--ink-dim); font-size:15px; max-width:1000px; margin-bottom:26px; line-height:1.5; }
+
+  .panel{
+    background:var(--bg-panel);
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:28px 32px;
+    margin-bottom:24px;
+  }
+
+  /* ---- state: intro / CTA ---- */
+  .cta-row{ display:flex; align-items:center; justify-content:space-between; gap:20px; flex-wrap:wrap; }
+  .cta-row h3{ font-size:17px; margin-bottom:6px; }
+  .cta-row p{ color:var(--ink-faint); font-size:13.5px; }
+  .btn-primary{
+    background:linear-gradient(135deg,var(--violet),var(--violet-deep));
+    color:#fff; border:none; padding:14px 30px; border-radius:10px;
+    font-size:14.5px; font-weight:600; cursor:pointer; white-space:nowrap;
+    box-shadow:0 6px 20px rgba(139,92,246,0.3);
+    transition:transform .15s;
+  }
+  .btn-primary:hover{ transform:translateY(-1px); }
+
+  .empty-panel{
+    background:var(--bg-raised); border:1px solid var(--line); border-radius:14px;
+    padding:26px; text-align:center; color:var(--ink-faint); font-size:14.5px;
+  }
+
+  h3.section-label{ font-size:17px; font-weight:700; margin:34px 0 14px; }
+
+  .search-input{
+    width:100%; background:var(--bg-raised); border:1px solid var(--line); color:var(--ink);
+    padding:16px 20px; border-radius:12px; font-size:14.5px; outline:none;
+  }
+  .search-input::placeholder{ color:var(--ink-faint); }
+  .search-input:focus{ border-color:rgba(139,92,246,0.5); box-shadow:0 0 0 3px rgba(139,92,246,0.15); }
+
+  /* ---- state: quiz ---- */
+  #quiz-panel{ display:none; }
+  .quiz-head h3{ font-size:19px; margin-bottom:4px; }
+  .quiz-head p{ color:var(--ink-faint); font-size:13.5px; margin-bottom:22px; }
+
+  .quiz-body{ display:flex; gap:26px; }
+  .poster{
+    flex:0 0 190px; width:190px; height:270px; border-radius:12px; overflow:hidden;
+    position:relative; display:flex; align-items:flex-end; border:1px solid var(--line);
+  }
+  .poster::after{ content:""; position:absolute; inset:0; background:linear-gradient(0deg, rgba(0,0,0,0.8), transparent 55%); }
+  .poster .p-title{ position:relative; z-index:2; padding:14px; font-family:'Sora',sans-serif; font-weight:800; font-size:16px; line-height:1.2; color:#fff; text-shadow:0 2px 8px rgba(0,0,0,.6); }
+
+  .quiz-right{ flex:1; display:flex; flex-direction:column; }
+  .rated-tag{ font-size:12px; color:var(--ink-faint); margin-bottom:4px; }
+  .movie-title{ font-size:22px; font-weight:700; margin-bottom:18px; }
+
+  .rate-options{ display:flex; flex-direction:column; gap:10px; }
+  .rate-opt{
+    background:var(--bg-row); border:1px solid var(--line); color:var(--ink);
+    padding:15px 18px; border-radius:10px; font-size:14.5px; text-align:left; cursor:pointer;
+    transition:background .15s, border-color .15s;
+  }
+  .rate-opt:hover{ background:#22223a; border-color:rgba(139,92,246,0.4); }
+  .rate-opt.loved:hover{ border-color:#ef476f; }
+  .rate-opt.liked:hover{ border-color:#8b5cf6; }
+  .rate-opt.meh:hover{ border-color:#f59e0b; }
+  .rate-opt.disliked:hover{ border-color:#6b7280; }
+
+  .quiz-footer{ display:flex; justify-content:flex-end; margin-top:20px; }
+  .btn-secondary{
+    background:var(--bg-row); border:1px solid var(--line); color:var(--ink);
+    padding:12px 22px; border-radius:10px; font-size:14px; font-weight:600; cursor:pointer;
+  }
+  .btn-secondary:hover{ background:#22223a; }
+
+  footer{
+    margin-top:20px; border-top:1px solid var(--line);
+    padding:30px 40px; display:flex; justify-content:space-between; align-items:flex-start;
+    flex-wrap:wrap; gap:20px;
+  }
+  footer .f-left .brand{ margin-bottom:8px; }
+  footer .f-left p{ font-size:12.5px; color:var(--ink-faint); }
+  footer .f-right{ text-align:right; font-size:12px; color:var(--ink-faint); max-width:320px; }
+  footer .f-icons{ display:flex; gap:16px; margin-top:12px; font-size:12px; color:var(--ink-faint); }
+
+  @media (max-width:640px){
+    main, .topbar, footer{ padding-left:18px; padding-right:18px; }
+    .quiz-body{ flex-direction:column; }
+    .poster{ width:100%; height:220px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand"><span class="dot"></span>NextWatch</div>
+  <div class="top-icons">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v13"/><path d="M7 12l5 5 5-5"/><path d="M5 21h14"/></svg>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18"/></svg>
+  </div>
+  <div class="top-right">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+</div>
+
+<main>
+  <h1 class="page-title">My Algorithm</h1>
+  <p class="intro">This is what your ratings have taught the algorithm so far. Love and hate count about twice as much as like and dislike, so rate more to dial it in.</p>
+
+  <!-- Intro / CTA panel -->
+  <div class="panel" id="cta-panel">
+    <div class="cta-row">
+      <div>
+        <h3>Create my algorithm</h3>
+        <p>Rate a few movies and shows and we'll start suggesting things you'll like.</p>
+      </div>
+      <button class="btn-primary" id="start-btn">Get started</button>
+    </div>
+  </div>
+
+  <!-- Quiz panel -->
+  <div class="panel" id="quiz-panel">
+    <div class="quiz-head">
+      <h3>Have you seen these movies?</h3>
+      <p>Rate the ones you've watched, skip the rest. There's no fixed list, so keep going as long as you like.</p>
+    </div>
+    <div class="quiz-body">
+      <div class="poster" id="quiz-poster">
+        <div class="p-title" id="quiz-poster-title"></div>
+      </div>
+      <div class="quiz-right">
+        <div class="rated-tag">Rated <span id="rated-count">0</span></div>
+        <div class="movie-title" id="quiz-movie-title"></div>
+        <div class="rate-options">
+          <button class="rate-opt loved" data-rate="loved">Loved it!</button>
+          <button class="rate-opt liked" data-rate="liked">Liked it</button>
+          <button class="rate-opt meh" data-rate="meh">Meh, it was okay</button>
+          <button class="rate-opt disliked" data-rate="disliked">Didn't like it</button>
+          <button class="rate-opt skip" data-rate="skip">I haven't watched it</button>
+        </div>
+        <div class="quiz-footer">
+          <button class="btn-secondary" id="stop-btn">Stop for now</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="empty-panel" id="no-ratings">No ratings yet. Take the quiz to get some, or search below to rate something you've seen already.</div>
+
+  <h3 class="section-label">Rate something you've watched</h3>
+  <input class="search-input" type="text" placeholder="Search for a movie or show...">
+</main>
+
+<footer>
+  <div class="f-left">
+    <div class="brand"><span class="dot"></span>NextWatch</div>
+    <p>Watch your favorite shows and movies for free!</p>
+    <p>(ɔ'ヮ'c)</p>
+    <div class="f-icons"><span>GitHub</span><span>Fluxer/Discord</span></div>
+  </div>
+  <div class="f-right">
+    <div>Disclaimer ⚠️</div>
+    <p>Please note: NextWatch does not host any files itself; instead, it only displays content from third-party providers. Legal issues should be taken up with them.</p>
+    <div style="margin-top:8px;">Legal / DMCA</div>
+  </div>
+</footer>
+
+<script>
+  const movies = [
+    { title:'The Bourne Identity (2002)', grad:['#1e3a8a','#0a1226'] },
+    { title:'The Departed (2006)', grad:['#7f1d1d','#1a0d0d'] },
+    { title:'Inception (2010)', grad:['#1e293b','#0a0a14'] },
+    { title:'Parasite (2019)', grad:['#166534','#06120e'] },
+    { title:'Whiplash (2014)', grad:['#92400e','#1a1305'] },
+    { title:'Gladiator (2000)', grad:['#78350f','#1a1305'] },
+    { title:'Arrival (2016)', grad:['#334155','#0a0f1a'] },
+    { title:'The Prestige (2006)', grad:['#3f3f46','#0f0f12'] },
+  ];
+  let idx = 0;
+  let ratedCount = 0;
+
+  function grad(g){ return `linear-gradient(160deg, ${g[0]}77, ${g[1]} 80%)`; }
+
+  function loadMovie(){
+    const m = movies[idx % movies.length];
+    document.getElementById('quiz-poster').style.background = grad(m.grad);
+    document.getElementById('quiz-poster-title').textContent = m.title;
+    document.getElementById('quiz-movie-title').textContent = m.title;
+    document.getElementById('rated-count').textContent = ratedCount;
+  }
+
+  document.getElementById('start-btn').addEventListener('click', () => {
+    document.getElementById('quiz-panel').style.display = 'block';
+    document.getElementById('cta-panel').style.display = 'none';
+    loadMovie();
+    document.getElementById('quiz-panel').scrollIntoView({behavior:'smooth', block:'start'});
+  });
+
+  document.querySelectorAll('.rate-opt').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (btn.dataset.rate !== 'skip') ratedCount++;
+      idx++;
+      loadMovie();
+    });
+  });
+
+  document.getElementById('stop-btn').addEventListener('click', () => {
+    document.getElementById('quiz-panel').style.display = 'none';
+    document.getElementById('cta-panel').style.display = 'block';
+  });
+</script>
+
+</body>
+</html>
