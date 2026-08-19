@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>For You — NextWatch</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div id="nav"></div>
+
+<main class="page">
+  <div class="page-head">
+    <div>
+      <p class="eyebrow">Built from your ratings</p>
+      <h2>For you</h2>
+      <p>Pulled from what you've rated so far. Rate more in <a href="browse.html" style="color:var(--gold);">Browse</a> to sharpen these.</p>
+    </div>
+    <div style="display:flex; gap:8px; align-items:flex-end;">
+      <div class="field" style="margin:0;">
+        <label for="limitInput">How many</label>
+        <input type="text" id="limitInput" placeholder="10" style="width:90px;">
+      </div>
+      <button class="btn" id="refreshBtn">Refresh</button>
+    </div>
+  </div>
+
+  <div class="msg" id="recMsg"></div>
+  <div id="recResults"></div>
+</main>
+
+<script src="js/api.js"></script>
+<script src="js/nav.js"></script>
+<script>
+requireAuth();
+renderNav('recommendations');
+
+const resultsEl = document.getElementById('recResults');
+const msg = document.getElementById('recMsg');
+const refreshBtn = document.getElementById('refreshBtn');
+const limitInput = document.getElementById('limitInput');
+
+function renderRecs(items) {
+  if (!items.length) {
+    resultsEl.innerHTML = `<div class="empty"><h3>Nothing to recommend yet</h3><p>Rate a handful of titles you already know and check back here.</p></div>`;
+    return;
+  }
+  items.forEach(item => { if (item && item.id != null) cacheTitle(item); });
+  resultsEl.innerHTML = items.map((item, i) => {
+    const title = extractTitleName(item) || item.title || item.name || 'Untitled';
+    const mt = extractMediaType(item) || item.media_type;
+    const badge = mediaBadge(mt);
+    const reason = item.reason || item.why || '';
+    const score = (item.score != null) ? item.score : (item.match != null ? item.match : null);
+    const hasId = item.id != null;
+    const titleMarkup = hasId
+      ? `<a class="ticket-title" href="title.html?id=${item.id}">${escapeHtml(title)}</a>`
+      : `<span class="ticket-title">${escapeHtml(title)}</span>`;
+    return `
+    <div class="ticket">
+      ${posterHtml(item, 'ticket-poster')}
+      <div class="ticket-body">
+        <div class="ticket-top">
+          ${titleMarkup}
+          ${badge ? `<span class="badge">${badge}</span>` : ''}
+        </div>
+        <div class="ticket-meta">Pick #${i + 1}${reason ? ' — ' + escapeHtml(reason) : ''}</div>
+        ${score != null ? `<div class="ticket-meta">Match score: ${escapeHtml(String(score))}</div>` : ''}
+        ${hasId ? `<div class="ticket-actions"><a class="btn small ghost" href="title.html?id=${item.id}">Details &amp; rate</a></div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function loadRecs() {
+  hideMsg(msg);
+  const raw = limitInput.value.trim();
+  const limit = raw ? Number(raw) : 10;
+  if (!Number.isInteger(limit) || limit < 1) {
+    showMsg(msg, 'Use a whole number, or leave it blank.', 'error');
+    return;
+  }
+  refreshBtn.disabled = true;
+  refreshBtn.innerHTML = '<span class="spinner"></span>';
+  resultsEl.innerHTML = '';
+  try {
+    const data = await NW.getRecommendations(limit);
+    const items = Array.isArray(data) ? data : (data && data.results) || [];
+    renderRecs(items);
+  } catch (err) {
+    showMsg(msg, err.message || 'Could not load recommendations.', 'error');
+  } finally {
+    refreshBtn.disabled = false;
+    refreshBtn.textContent = 'Refresh';
+  }
+}
+
+refreshBtn.addEventListener('click', loadRecs);
+loadRecs();
+</script>
+</body>
+</html>

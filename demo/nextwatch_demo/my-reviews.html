@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>My Ratings — NextWatch</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div id="nav"></div>
+
+<main class="page">
+  <div class="page-head">
+    <div>
+      <p class="eyebrow">Your record</p>
+      <h2>My ratings</h2>
+      <p>Everything you've rated. Change your mind or clear one out any time.</p>
+    </div>
+    <button class="btn ghost small" id="refreshBtn">Refresh</button>
+  </div>
+
+  <div class="msg" id="listMsg"></div>
+  <div id="reviewResults"></div>
+</main>
+
+<script src="js/api.js"></script>
+<script src="js/nav.js"></script>
+<script>
+requireAuth();
+renderNav('my-reviews');
+
+const resultsEl = document.getElementById('reviewResults');
+const msg = document.getElementById('listMsg');
+const refreshBtn = document.getElementById('refreshBtn');
+const labels = ['', 'Bad', 'Not for me', "It's okay", 'Liked it', 'Loved it'];
+
+function ratingPickerHtml(id, current) {
+  return `<div class="rating-picker" data-for="${id}">
+    ${labels.slice(1).map((l, i) => {
+      const val = i + 1;
+      return `<div class="rating-pill ${val === current ? 'selected' : ''}" data-val="${val}" onclick="pickRating(${id}, ${val})">
+        <span class="num">${val}</span>${l}
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+
+function renderReviews(items) {
+  if (!items.length) {
+    resultsEl.innerHTML = `<div class="empty"><h3>No ratings yet</h3><p>Head to <a href="browse.html" style="color:var(--gold);">Browse</a> and rate something.</p></div>`;
+    return;
+  }
+  resultsEl.innerHTML = items.map(item => {
+    const id = item.id;
+    const title = extractTitleName(item) || (item.title && !isNaN(item.title) ? 'Title #' + item.title : 'Untitled');
+    const mt = extractMediaType(item);
+    const badge = mediaBadge(mt);
+    const rating = item.rating;
+    const titleId = (typeof item.title === 'number') ? item.title : (item.title && item.title.id);
+    return `
+    <div class="ticket">
+      ${posterHtml(item, 'ticket-poster')}
+      <div class="ticket-body">
+        <div class="ticket-top">
+          ${titleId != null
+            ? `<a class="ticket-title" href="title.html?id=${titleId}">${escapeHtml(title)}</a>`
+            : `<span class="ticket-title">${escapeHtml(title)}</span>`}
+          ${badge ? `<span class="badge">${badge}</span>` : ''}
+        </div>
+        <div class="ticket-meta">Your rating: <strong style="color:var(--gold);">${rating}/5 — ${labels[rating] || ''}</strong></div>
+        ${item.review_text ? `<div class="ticket-meta" style="color:var(--cream);">"${escapeHtml(item.review_text)}"</div>` : ''}
+        <div class="ticket-actions">
+          <button class="btn small ghost" onclick="toggleEdit(${id})">Edit rating</button>
+          <button class="btn small danger" onclick="removeReview(${id})">Delete</button>
+        </div>
+        <div class="inline-panel" id="panel-${id}">
+          ${ratingPickerHtml(id, rating)}
+          <button class="btn small" onclick="saveEdit(${id})">Save</button>
+          <div class="msg" id="panelMsg-${id}"></div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+let openPanelId = null;
+function toggleEdit(id) {
+  if (openPanelId && openPanelId !== id) {
+    const prev = document.getElementById('panel-' + openPanelId);
+    if (prev) prev.classList.remove('open');
+  }
+  const panel = document.getElementById('panel-' + id);
+  panel.classList.toggle('open');
+  openPanelId = panel.classList.contains('open') ? id : null;
+}
+
+const editRatings = {};
+function pickRating(id, val) {
+  editRatings[id] = val;
+  document.querySelectorAll(`.rating-picker[data-for="${id}"] .rating-pill`).forEach(pill => {
+    pill.classList.toggle('selected', Number(pill.dataset.val) === val);
+  });
+}
+
+async function saveEdit(id) {
+  const panelMsg = document.getElementById('panelMsg-' + id);
+  hideMsg(panelMsg);
+  const rating = editRatings[id];
+  if (!rating) {
+    showMsg(panelMsg, 'Pick a new rating first.', 'error');
+    return;
+  }
+  try {
+    await NW.patchReview(id, rating);
+    showMsg(panelMsg, 'Updated.', 'success');
+    setTimeout(loadReviews, 500);
+  } catch (err) {
+    showMsg(panelMsg, err.message || 'Could not update.', 'error');
+  }
+}
+
+async function removeReview(id) {
+  if (!confirm('Delete this rating? This can\'t be undone.')) return;
+  hideMsg(msg);
+  try {
+    await NW.deleteReview(id);
+    loadReviews();
+  } catch (err) {
+    showMsg(msg, err.message || 'Could not delete.', 'error');
+  }
+}
+
+async function loadReviews() {
+  hideMsg(msg);
+  resultsEl.innerHTML = '';
+  refreshBtn.disabled = true;
+  try {
+    const data = await NW.listReviews();
+    const items = Array.isArray(data) ? data : (data && data.results) || [];
+    renderReviews(items);
+  } catch (err) {
+    showMsg(msg, err.message || 'Could not load your ratings.', 'error');
+  } finally {
+    refreshBtn.disabled = false;
+  }
+}
+
+refreshBtn.addEventListener('click', loadReviews);
+loadReviews();
+</script>
+</body>
+</html>

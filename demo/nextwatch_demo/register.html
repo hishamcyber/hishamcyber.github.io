@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Create an account — NextWatch</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div id="nav"></div>
+
+<main class="page narrow">
+  <div class="auth-card" style="margin-top:24px;">
+    <h2>Create an account</h2>
+    <p class="sub">Takes a minute. No card, no catch.</p>
+    <div class="msg" id="regMsg"></div>
+    <form id="regForm">
+      <div class="field">
+        <label for="regUsername">Username</label>
+        <input type="text" id="regUsername" autocomplete="username" required>
+      </div>
+      <div class="field">
+        <label for="regEmail">Email</label>
+        <input type="text" id="regEmail" autocomplete="email" required>
+      </div>
+      <div class="field">
+        <label for="regPassword">Password</label>
+        <input type="password" id="regPassword" autocomplete="new-password" required>
+      </div>
+      <button type="submit" class="btn block" id="regBtn">Create account</button>
+    </form>
+    <div class="auth-switch">Already registered? <a href="index.html">Log in</a></div>
+  </div>
+</main>
+
+<script src="js/api.js"></script>
+<script src="js/nav.js"></script>
+<script>
+renderNav();
+if (NW.isAuthed()) window.location.href = 'browse.html';
+
+const form = document.getElementById('regForm');
+const msg = document.getElementById('regMsg');
+const btn = document.getElementById('regBtn');
+
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  hideMsg(msg);
+  const username = document.getElementById('regUsername').value.trim();
+  const email = document.getElementById('regEmail').value.trim();
+  const password = document.getElementById('regPassword').value;
+  if (!username || !email || !password) return;
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Creating…';
+  try {
+    await NW.register(username, email, password);
+    showMsg(msg, 'Account created — log in to continue.', 'success');
+    setTimeout(() => {
+      window.location.href = 'index.html?u=' + encodeURIComponent(username);
+    }, 900);
+  } catch (err) {
+    showMsg(msg, err.message || 'Could not create account.', 'error');
+    btn.disabled = false;
+    btn.textContent = 'Create account';
+  }
+});
+</script>
+</body>
+</html>

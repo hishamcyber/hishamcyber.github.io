@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Browse — NextWatch</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div id="nav"></div>
+
+<main class="page">
+  <div class="page-head">
+    <div>
+      <p class="eyebrow">Discover</p>
+      <h2>Popular right now</h2>
+      <p>Straight from TMDB — scroll for something you already know, or jump to search below if you know the name.</p>
+    </div>
+    <div class="segmented" id="mediaToggle">
+      <button data-media="movie" class="active">Movies</button>
+      <button data-media="tv">TV</button>
+    </div>
+  </div>
+
+  <div class="tabbar" id="tabBar"></div>
+  <div class="chip-row" id="genreChips"></div>
+  <div class="msg" id="discoverMsg"></div>
+  <div class="discover-grid" id="discoverGrid"></div>
+  <div style="text-align:center; margin-bottom:10px;">
+    <button class="btn ghost small" id="loadMoreBtn">Load more</button>
+  </div>
+
+  <div class="section-divider"><span>Know the name?</span><div class="line"></div></div>
+
+  <div class="page-head">
+    <div>
+      <p class="eyebrow">Search</p>
+      <h2>Find something to rate</h2>
+      <p>Checks our library first, and pulls in a live result if it's new to us — give it a second on first search.</p>
+    </div>
+  </div>
+
+  <div class="search-bar">
+    <div class="field">
+      <input type="text" id="searchInput" placeholder="Search a movie or show, e.g. Interstellar">
+    </div>
+    <button class="btn" id="searchBtn">Search</button>
+  </div>
+  <div class="msg" id="searchMsg"></div>
+
+  <div id="results" style="margin-top:20px;"></div>
+</main>
+
+<script src="js/api.js"></script>
+<script src="js/tmdb.js"></script>
+<script src="js/nav.js"></script>
+<script>
+renderNav('browse');
+
+/* ---------------- Discover (direct TMDB) ---------------- */
+const PAGE_SIZE = 24;
+const discoverGrid = document.getElementById('discoverGrid');
+const discoverMsg = document.getElementById('discoverMsg');
+const tabBar = document.getElementById('tabBar');
+const genreChips = document.getElementById('genreChips');
+const loadMoreBtn = document.getElementById('loadMoreBtn');
+const mediaToggle = document.getElementById('mediaToggle');
+
+let discoverMedia = 'movie';
+let discoverCategory = 'trending';
+let discoverGenre = null;
+let discoverTmdbPage = 1;
+let discoverTotalPages = Infinity;
+let discoverQueue = [];
+let discoverShown = 0;
+
+function renderTabs() {
+  tabBar.innerHTML = TMDB.categoriesFor(discoverMedia).map(c =>
+    `<button class="tab-btn ${discoverCategory === c.key && !discoverGenre ? 'active' : ''}" data-cat="${c.key}">${c.label}</button>`
+  ).join('');
+  tabBar.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      discoverCategory = btn.dataset.cat;
+      discoverGenre = null;
+      resetAndLoad();
+    });
+  });
+}
+
+async function renderGenreChips() {
+  genreChips.innerHTML = '';
+  try {
+    const genres = await TMDB.getGenres(discoverMedia);
+    genreChips.innerHTML = genres.slice(0, 12).map(g =>
+      `<button class="chip ${discoverGenre === g.id ? 'active' : ''}" data-genre="${g.id}">${escapeHtml(g.name)}</button>`
+    ).join('');
+    genreChips.querySelectorAll('.chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        const id = Number(chip.dataset.genre);
+        discoverGenre = discoverGenre === id ? null : id;
+        resetAndLoad();
+      });
+    });
+  } catch (e) {
+    // Genre chips are a nice-to-have; a failed key/network shows on the main grid message instead.
+  }
+}
+
+function discoverCardHtml(item) {
+  const n = TMDB.normalize(item, discoverMedia);
+  const poster = TMDB.posterUrl(n.poster_path);
+  const year = n.release_date ? String(n.release_date).slice(0, 4) : '';
+  const rating = (n.vote_average != null) ? n.vote_average.toFixed(1) : null;
+  const href = `title.html?tmdb=${n.tmdb_id}&media=${n.media_type}`;
+  return `
+    <a class="discover-card" href="${href}">
+      ${poster
+        ? `<img src="${poster}" alt="${escapeHtml(n.title)} poster" class="discover-poster" loading="lazy"
+             onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'discover-poster poster-ph', innerHTML:'&#127909;'}))">`
+        : `<div class="discover-poster poster-ph">&#127909;</div>`
+      }
+      <div class="discover-cap">
+        <div class="t">${escapeHtml(n.title)}</div>
+        <div class="m"><span>${year || '—'}</span>${rating ? `<span class="rate">&#9733; ${rating}</span>` : ''}</div>
+      </div>
+    </a>`;
+}
+
+// Keeps the queue stocked with at least `min` unshown items, pulling extra
+// TMDB pages as needed so a 24-item chunk never falls short of a full row.
+async function fillQueue(min) {
+  while (discoverQueue.length < min && discoverTmdbPage <= discoverTotalPages) {
+    const data = discoverGenre
+      ? await TMDB.discoverByGenrePage(discoverMedia, discoverGenre, discoverTmdbPage)
+      : await TMDB.getCategoryPage(discoverMedia, discoverCategory, discoverTmdbPage);
+    discoverTotalPages = data.total_pages || 1;
+    discoverQueue = discoverQueue.concat(data.results || []);
+    discoverTmdbPage += 1;
+  }
+}
+
+async function loadDiscoverChunk() {
+  hideMsg(discoverMsg);
+  loadMoreBtn.disabled = true;
+  loadMoreBtn.innerHTML = '<span class="spinner"></span>';
+  try {
+    await fillQueue(PAGE_SIZE);
+    const chunk = discoverQueue.splice(0, PAGE_SIZE);
+    discoverShown += chunk.length;
+    chunk.forEach(it => sessionStorage.setItem('nw_tmdb_' + (it.media_type || discoverMedia) + '_' + it.id, JSON.stringify(TMDB.normalize(it, discoverMedia))));
+    discoverGrid.insertAdjacentHTML('beforeend', chunk.map(discoverCardHtml).join(''));
+    if (!discoverShown) {
+      discoverGrid.innerHTML = `<div class="empty" style="grid-column:1/-1;"><h3>Nothing here</h3><p>TMDB didn't return anything for this category.</p></div>`;
+    }
+    loadMoreBtn.style.display = (discoverQueue.length > 0 || discoverTmdbPage <= discoverTotalPages) ? 'inline-flex' : 'none';
+  } catch (err) {
+    if (err.noKey) {
+      discoverGrid.innerHTML = '';
+      showMsg(discoverMsg, "TMDB isn't configured yet — add an API key in js/tmdb.js.", 'error');
+      loadMoreBtn.style.display = 'none';
+    } else {
+      showMsg(discoverMsg, err.message || 'Could not load titles from TMDB.', 'error');
+    }
+  } finally {
+    loadMoreBtn.disabled = false;
+    loadMoreBtn.textContent = 'Load more';
+  }
+}
+
+function resetAndLoad() {
+  discoverTmdbPage = 1;
+  discoverTotalPages = Infinity;
+  discoverQueue = [];
+  discoverShown = 0;
+  discoverGrid.innerHTML = '';
+  renderTabs();
+  loadDiscoverChunk();
+}
+
+mediaToggle.querySelectorAll('button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    if (btn.dataset.media === discoverMedia) return;
+    mediaToggle.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    discoverMedia = btn.dataset.media;
+    discoverCategory = 'trending';
+    discoverGenre = null;
+    renderGenreChips();
+    resetAndLoad();
+  });
+});
+
+loadMoreBtn.addEventListener('click', loadDiscoverChunk);
+
+renderTabs();
+renderGenreChips();
+loadDiscoverChunk();
+
+/* ---------------- Search (local backend) ---------------- */
+const input = document.getElementById('searchInput');
+const searchBtn = document.getElementById('searchBtn');
+const resultsEl = document.getElementById('results');
+const msg = document.getElementById('searchMsg');
+let openPanelId = null;
+
+function ratingPickerHtml(id) {
+  const labels = ['Bad', 'Not for me', "It's okay", 'Liked it', 'Loved it'];
+  return `<div class="rating-picker" data-for="${id}">
+    ${labels.map((l, i) => `<div class="rating-pill" data-val="${i + 1}" onclick="pickRating(${id}, ${i + 1})">
+        <span class="num">${i + 1}</span>${l}
+      </div>`).join('')}
+  </div>`;
+}
+
+function renderResults(items) {
+  if (!items.length) {
+    resultsEl.innerHTML = `<div class="empty"><h3>Nothing found</h3><p>Try a different spelling, or the show's full name.</p></div>`;
+    return;
+  }
+  items.forEach(cacheTitle);
+  resultsEl.innerHTML = items.map(item => {
+    const title = extractTitleName(item) || item.title || item.name || 'Untitled';
+    const badge = mediaBadge(item.media_type);
+    const year = extractYear(item);
+    return `
+    <div class="ticket">
+      ${posterHtml(item, 'ticket-poster')}
+      <div class="ticket-body">
+        <div class="ticket-top">
+          <a class="ticket-title" href="title.html?id=${item.id}">${escapeHtml(title)}</a>
+          ${badge ? `<span class="badge">${badge}</span>` : ''}
+        </div>
+        <div class="ticket-meta">${year ? 'Released ' + escapeHtml(year) : 'Release date unknown'}</div>
+        <div class="ticket-actions">
+          <a class="btn small ghost" href="title.html?id=${item.id}">Details</a>
+          <button class="btn small" onclick="togglePanel(${item.id})">Rate this</button>
+        </div>
+        <div class="inline-panel" id="panel-${item.id}">
+          ${ratingPickerHtml(item.id)}
+          <div class="field" style="margin-top:8px;">
+            <label>Review (optional)</label>
+            <textarea id="review-${item.id}" placeholder="What stood out?"></textarea>
+          </div>
+          <button class="btn" onclick="submitReview(${item.id})">Save rating</button>
+          <div class="msg" id="panelMsg-${item.id}"></div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function togglePanel(id) {
+  if (openPanelId && openPanelId !== id) {
+    const prev = document.getElementById('panel-' + openPanelId);
+    if (prev) prev.classList.remove('open');
+  }
+  const panel = document.getElementById('panel-' + id);
+  panel.classList.toggle('open');
+  openPanelId = panel.classList.contains('open') ? id : null;
+}
+
+const selectedRatings = {};
+function pickRating(id, val) {
+  selectedRatings[id] = val;
+  document.querySelectorAll(`.rating-picker[data-for="${id}"] .rating-pill`).forEach(pill => {
+    pill.classList.toggle('selected', Number(pill.dataset.val) === val);
+  });
+}
+
+async function submitReview(id) {
+  const panelMsg = document.getElementById('panelMsg-' + id);
+  hideMsg(panelMsg);
+  if (!NW.isAuthed()) {
+    showMsg(panelMsg, 'Log in to save a rating.', 'error');
+    return;
+  }
+  const rating = selectedRatings[id];
+  if (!rating) {
+    showMsg(panelMsg, 'Pick a rating from 1–5 first.', 'error');
+    return;
+  }
+  const text = document.getElementById('review-' + id).value;
+  try {
+    await NW.createReview(id, rating, text);
+    showMsg(panelMsg, 'Saved — find it anytime in My Ratings.', 'success');
+  } catch (err) {
+    showMsg(panelMsg, err.message || 'Could not save rating.', 'error');
+  }
+}
+
+async function runSearch() {
+  const q = input.value.trim();
+  hideMsg(msg);
+  if (!q) return;
+  searchBtn.disabled = true;
+  searchBtn.innerHTML = '<span class="spinner"></span>';
+  resultsEl.innerHTML = '';
+  try {
+    const data = await NW.searchTitles(q);
+    const items = Array.isArray(data) ? data : (data && data.results) || [];
+    renderResults(items);
+  } catch (err) {
+    showMsg(msg, err.message || 'Search failed.', 'error');
+  } finally {
+    searchBtn.disabled = false;
+    searchBtn.textContent = 'Search';
+  }
+}
+
+searchBtn.addEventListener('click', runSearch);
+input.addEventListener('keydown', (e) => { if (e.key === 'Enter') runSearch(); });
+</script>
+</body>
+</html>

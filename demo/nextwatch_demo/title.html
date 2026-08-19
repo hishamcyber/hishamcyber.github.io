@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Title — NextWatch</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div id="nav"></div>
+
+<main class="page">
+  <div id="titleContent">
+    <div class="empty"><span class="spinner"></span></div>
+  </div>
+</main>
+
+<script src="js/api.js"></script>
+<script src="js/tmdb.js"></script>
+<script src="js/nav.js"></script>
+<script>
+renderNav('browse');
+
+const params = new URLSearchParams(window.location.search);
+const localId = params.get('id');
+const tmdbId = params.get('tmdb');
+const tmdbMedia = params.get('media') || 'movie';
+const host = document.getElementById('titleContent');
+const labels = ['', 'Bad', 'Not for me', "It's okay", 'Liked it', 'Loved it'];
+let selectedRating = null;
+
+function notFound() {
+  host.innerHTML = `
+    <div class="empty">
+      <h3>Can't show this title directly</h3>
+      <p>This page reads its details from wherever you clicked it, and that's gone now (usually after a page refresh). Go back and open it again.</p>
+      <p style="margin-top:16px;"><a class="btn small" href="browse.html">Back to browse</a></p>
+    </div>`;
+}
+
+function render(item, opts = {}) {
+  const title = extractTitleName(item) || item.title || item.name || 'Untitled';
+  const badge = mediaBadge(extractMediaType(item) || item.media_type);
+  const year = extractYear(item);
+  const overview = extractOverview(item);
+  const posterSrc = extractPoster(item);
+
+  host.innerHTML = `
+    <div class="detail">
+      ${posterSrc
+        ? `<img src="${posterSrc}" alt="${escapeHtml(title)} poster" class="detail-poster"
+             onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'detail-poster poster-ph', innerHTML:'&#127909;'}))">`
+        : `<div class="detail-poster poster-ph">&#127909;</div>`
+      }
+      <div class="detail-info">
+        ${badge ? `<span class="badge">${badge}</span>` : ''}
+        <h1>${escapeHtml(title)}</h1>
+        <div class="detail-year">${year || 'Release date unknown'}</div>
+        ${overview ? `<p class="detail-overview">${escapeHtml(overview)}</p>` : `<p class="detail-overview">No synopsis available for this one yet.</p>`}
+
+        <div class="rate-card">
+          <h3 style="margin-bottom:12px;">Rate this ${badge === 'TV' ? 'show' : 'movie'}</h3>
+          <div class="rating-picker" id="ratingPicker">
+            ${labels.slice(1).map((l, i) => `<div class="rating-pill" data-val="${i + 1}" onclick="pickRating(${i + 1})">
+                <span class="num">${i + 1}</span>${l}
+              </div>`).join('')}
+          </div>
+          <div class="field">
+            <label for="reviewText">Review (optional)</label>
+            <textarea id="reviewText" placeholder="What stood out?"></textarea>
+          </div>
+          <button class="btn" id="saveBtn">Save rating</button>
+          <div class="msg" id="rateMsg"></div>
+        </div>
+      </div>
+    </div>`;
+
+  document.getElementById('saveBtn').addEventListener('click', () => {
+    if (opts.localId != null) submitReview(opts.localId);
+    else submitReviewViaSync(title);
+  });
+}
+
+function pickRating(val) {
+  selectedRating = val;
+  document.querySelectorAll('#ratingPicker .rating-pill').forEach(pill => {
+    pill.classList.toggle('selected', Number(pill.dataset.val) === val);
+  });
+}
+
+async function submitReview(id) {
+  const msg = document.getElementById('rateMsg');
+  hideMsg(msg);
+  if (!NW.isAuthed()) {
+    showMsg(msg, 'Log in to save a rating.', 'error');
+    return;
+  }
+  if (!selectedRating) {
+    showMsg(msg, 'Pick a rating from 1–5 first.', 'error');
+    return;
+  }
+  const text = document.getElementById('reviewText').value;
+  const btn = document.getElementById('saveBtn');
+  btn.disabled = true;
+  try {
+    await NW.createReview(id, selectedRating, text);
+    showMsg(msg, 'Saved — find it anytime in My Ratings.', 'success');
+  } catch (err) {
+    showMsg(msg, err.message || 'Could not save rating.', 'error');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+// TMDB-sourced titles don't have a local id yet — resolve one through the
+// backend's own search endpoint (which syncs TMDB results into the local
+// DB) by matching on title text, then rate as usual.
+async function submitReviewViaSync(title) {
+  const msg = document.getElementById('rateMsg');
+  hideMsg(msg);
+  if (!NW.isAuthed()) {
+    showMsg(msg, 'Log in to save a rating.', 'error');
+    return;
+  }
+  if (!selectedRating) {
+    showMsg(msg, 'Pick a rating from 1–5 first.', 'error');
+    return;
+  }
+  const btn = document.getElementById('saveBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Matching to your library…';
+  try {
+    const data = await NW.searchTitles(title);
+    const items = Array.isArray(data) ? data : (data && data.results) || [];
+    const match = items.find(it => (extractTitleName(it) || it.title || '').toLowerCase() === title.toLowerCase()) || items[0];
+    if (!match) throw new Error("Couldn't match this to a title in your library yet — try again in a moment.");
+    await submitReview(match.id);
+  } catch (err) {
+    showMsg(msg, err.message || 'Could not save rating.', 'error');
+    btn.disabled = false;
+    btn.textContent = 'Save rating';
+  }
+}
+
+if (localId) {
+  const cached = readCachedTitle(localId);
+  if (cached) render(cached, { localId });
+  else notFound();
+} else if (tmdbId) {
+  const cacheKey = 'nw_tmdb_' + tmdbMedia + '_' + tmdbId;
+  let cached = null;
+  try { cached = JSON.parse(sessionStorage.getItem(cacheKey) || 'null'); } catch (e) {}
+  if (cached) {
+    render(cached, {});
+  } else if (TMDB.hasKey()) {
+    TMDB.getDetails(tmdbMedia, tmdbId).then(d => render(TMDB.normalize(d, tmdbMedia), {})).catch(notFound);
+  } else {
+    notFound();
+  }
+} else {
+  notFound();
+}
+</script>
+</body>
+</html>

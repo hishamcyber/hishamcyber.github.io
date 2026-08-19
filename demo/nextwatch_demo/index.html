@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NextWatch — Rate what you've seen</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div id="nav"></div>
+
+<main class="page narrow">
+  <section class="hero">
+    <p class="eyebrow">Now showing</p>
+    <h1>Next<span>Watch</span></h1>
+    <p class="tagline">Rate what you've seen. Get told what to watch next — picked from your actual taste, not a trending chart.</p>
+  </section>
+
+  <div class="auth-card">
+    <h2>Welcome back</h2>
+    <p class="sub">Log in to pick up your recommendations.</p>
+    <div class="msg" id="loginMsg"></div>
+    <form id="loginForm">
+      <div class="field">
+        <label for="username">Username</label>
+        <input type="text" id="username" autocomplete="username" required>
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input type="password" id="password" autocomplete="current-password" required>
+      </div>
+      <button type="submit" class="btn block" id="loginBtn">Log in</button>
+    </form>
+    <div class="auth-switch">New here? <a href="register.html">Create an account</a></div>
+    <div style="text-align:center; margin-top:10px;">
+      <a class="btn ghost small" href="browse.html" id="guestBtn">Continue as guest</a>
+    </div>
+  </div>
+
+  <div class="steps">
+    <div class="step">
+      <span class="num">01</span>
+      <h3>Rate a few titles</h3>
+      <p>Search anything, tell us what you thought — one to five.</p>
+    </div>
+    <div class="step">
+      <span class="num">02</span>
+      <h3>We learn your taste</h3>
+      <p>Every rating sharpens the picture of what you actually like.</p>
+    </div>
+    <div class="step">
+      <span class="num">03</span>
+      <h3>Get your picks</h3>
+      <p>Open "For You" for recommendations built from your ratings.</p>
+    </div>
+  </div>
+
+  <p class="footer-note">Rate what you love — recommendations get sharper the more you tell us.</p>
+</main>
+
+<script src="js/api.js"></script>
+<script src="js/nav.js"></script>
+<script>
+renderNav();
+if (NW.isAuthed()) window.location.href = 'browse.html';
+
+const prefill = new URLSearchParams(window.location.search).get('u');
+if (prefill) document.getElementById('username').value = prefill;
+
+const form = document.getElementById('loginForm');
+const msg = document.getElementById('loginMsg');
+const btn = document.getElementById('loginBtn');
+
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  hideMsg(msg);
+  const username = document.getElementById('username').value.trim();
+  const password = document.getElementById('password').value;
+  if (!username || !password) return;
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Logging in…';
+  try {
+    const data = await NW.login(username, password);
+    if (!data || !data.access) throw new Error('Login succeeded but no token came back.');
+    NW.setSession(data.access, username);
+    window.location.href = 'browse.html';
+  } catch (err) {
+    showMsg(msg, err.message || 'Could not log in.', 'error');
+    btn.disabled = false;
+    btn.textContent = 'Log in';
+  }
+});
+</script>
+</body>
+</html>
